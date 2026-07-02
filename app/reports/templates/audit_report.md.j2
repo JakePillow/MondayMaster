@@ -1,0 +1,50 @@
+# Monday Structural Audit Report
+
+## 1. Executive Summary
+
+This read-only report contains deterministic schema findings only. GPT interpretation and ClickUp API writes are deferred.
+
+- Boards audited: {{ model.boards | length }}
+- Findings: {{ findings | length }}
+- Critical: {{ severity_counts.get('critical', 0) }}
+- High: {{ severity_counts.get('high', 0) }}
+- Medium: {{ severity_counts.get('medium', 0) }}
+- Low: {{ severity_counts.get('low', 0) }}
+
+## 2. Current Monday Architecture
+
+See `schema_inventory.md` for workspace, board, group, and column inventory.
+
+## 3. Structural Health
+
+{% for board in model.boards %}
+### {{ board.name }} (`{{ board.id }}`)
+
+{% set board_findings = by_board.get(board.id, []) %}
+- Groups: {{ board.groups | length }}
+- Columns: {{ board.columns | length }}
+- Sample item count: {{ board.item_count if board.item_count is not none else 'n/a' }}
+- Findings: {{ board_findings | length }}
+
+{% if board_findings %}
+| Severity | Rule | Finding | Recommendation |
+| --- | --- | --- | --- |
+{% for finding in board_findings -%}
+| {{ finding.severity }} | {{ finding.rule_id }} | {{ finding.finding }} | {{ finding.recommendation }} |
+{% endfor %}
+{% else %}
+No deterministic structural findings.
+{% endif %}
+{% endfor %}
+
+## 4. Major Schema Risks
+
+{% for finding in findings if finding.severity in ['critical', 'high'] -%}
+- **{{ finding.severity | upper }}** `{{ finding.rule_id }}` on {{ finding.object_type }} `{{ finding.object_name }}`: {{ finding.finding }} Recommendation: {{ finding.recommendation }}
+{% else %}
+No high or critical findings were detected.
+{% endfor %}
+
+## 5. Cleanup Before Migration
+
+Prioritize missing status/owner/due-date columns, duplicate names, formula and mirror columns, and complex connect-board relationships before building a ClickUp migration plan.
