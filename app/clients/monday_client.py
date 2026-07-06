@@ -28,33 +28,35 @@ class MondayClient:
         return data.get("data", {})
 
     def test_connection(self) -> dict:
-        return self.query("query { me { id name email } account { id name slug } }")
+        self.query("query { me { id } }")
+        return {"connected": True, "privacy_mode": "technical_metadata_only"}
 
     def get_account(self) -> dict:
-        return self.query("query { account { id name slug tier first_day_of_the_week } }").get("account", {})
+        return self.query("query { account { id } }").get("account", {})
 
     def get_workspaces(self) -> list[dict]:
-        q = "query { workspaces { id name kind description state } }"
+        q = "query { workspaces { id kind state } }"
         return self.query(q).get("workspaces", [])
 
     def get_users(self) -> list[dict]:
-        q = "query { users { id name email title enabled is_admin is_guest is_pending } }"
-        return self.query(q).get("users", [])
+        # User records are unnecessary for a structural schema audit and are
+        # deliberately not requested from Monday.
+        return []
 
     def get_boards(self, workspace_id: str | None = None) -> list[dict]:
         if workspace_id:
-            q = "query($workspace_ids: [ID!]) { boards(workspace_ids: $workspace_ids, limit: 500) { id name description state board_kind workspace_id } }"
+            q = "query($workspace_ids: [ID!]) { boards(workspace_ids: $workspace_ids, limit: 500) { id state board_kind workspace_id } }"
             return self.query(q, {"workspace_ids": [workspace_id]}).get("boards", [])
-        q = "query { boards(limit: 500) { id name description state board_kind workspace_id } }"
+        q = "query { boards(limit: 500) { id state board_kind workspace_id } }"
         return self.query(q).get("boards", [])
 
     def get_board_schema(self, board_id: str) -> dict:
         q = """
         query($ids: [ID!]) {
           boards(ids: $ids) {
-            id name description state board_kind workspace_id
-            groups { id title }
-            columns { id title type settings_str description }
+            id state board_kind workspace_id
+            groups { id }
+            columns { id type }
           }
         }
         """
@@ -64,9 +66,9 @@ class MondayClient:
     def get_board_items_page(self, board_id: str, cursor: str | None = None, limit: int = 100) -> dict:
         limit = max(1, min(limit, 500))
         if cursor:
-            q = "query($cursor: String!, $limit: Int!) { next_items_page(cursor: $cursor, limit: $limit) { cursor items { id name state group { id title } column_values { id text value type } subitems { id name } } } }"
+            q = "query($cursor: String!, $limit: Int!) { next_items_page(cursor: $cursor, limit: $limit) { cursor items { id } } }"
             return self.query(q, {"cursor": cursor, "limit": limit}).get("next_items_page", {})
-        q = "query($ids: [ID!], $limit: Int!) { boards(ids: $ids) { items_page(limit: $limit) { cursor items { id name state group { id title } column_values { id text value type } subitems { id name } } } } }"
+        q = "query($ids: [ID!], $limit: Int!) { boards(ids: $ids) { items_page(limit: $limit) { cursor items { id } } } }"
         boards = self.query(q, {"ids": [board_id], "limit": limit}).get("boards", [])
         return boards[0].get("items_page", {}) if boards else {}
 

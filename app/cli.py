@@ -10,6 +10,7 @@ from app.audits.engine import AuditEngine
 from app.clients.monday_client import MondayClient
 from app.exporters.monday_exporter import MondayExporter
 from app.normalizers.monday_normalizer import MondayNormalizer
+from app.privacy.policy import scan_export_tree
 from app.reports.markdown_reporter import MarkdownReporter
 from app.storage.artifact_store import ArtifactStore
 
@@ -34,17 +35,17 @@ def test_connection():
 
 @app.command("export-account")
 def export_account():
-    store = _store(); run = store.new_run_dir(); store.write_json(run / "account.json", _client().get_account()); typer.echo(run)
+    path = MondayExporter(_client(), _store()).export_account(); typer.echo(path)
 
 
 @app.command("export-workspaces")
 def export_workspaces():
-    store = _store(); run = store.new_run_dir(); store.write_json(run / "workspaces.json", _client().get_workspaces()); typer.echo(run)
+    path = MondayExporter(_client(), _store()).export_workspaces(); typer.echo(path)
 
 
 @app.command("export-boards")
 def export_boards():
-    store = _store(); run = store.new_run_dir(); store.write_json(run / "boards_index.json", _client().get_boards()); typer.echo(run)
+    path = MondayExporter(_client(), _store()).export_boards(); typer.echo(path)
 
 
 @app.command("export-board")
@@ -76,6 +77,18 @@ def report():
     paths = MarkdownReporter(_store()).generate()
     for path in paths:
         typer.echo(f"Wrote report {path}")
+
+
+@app.command("privacy-check")
+def privacy_check():
+    """Fail if an export contains identities, content, credentials, or raw settings."""
+    store = _store()
+    violations = scan_export_tree(store.export_root)
+    if violations:
+        for violation in violations:
+            typer.echo(violation, err=True)
+        raise typer.Exit(code=1)
+    typer.echo("Privacy check passed: artifacts contain technical metadata only.")
 
 
 if __name__ == "__main__":

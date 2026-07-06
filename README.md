@@ -2,7 +2,7 @@
 
 A local-first schema audit and migration-readiness tool for Monday.com workspaces.
 
-The tool exports Monday.com account structure, normalizes boards into a platform-neutral schema model, runs deterministic quality checks, applies structured GPT analysis, and generates reports for deciding whether the current Monday.com setup should be cleaned, retained, or migrated to ClickUp.
+The tool exports privacy-minimised Monday.com technical structure, normalizes boards into a platform-neutral schema model, runs deterministic quality checks, and generates local reports. External GPT analysis and ClickUp transmission are disabled in Phase 1.
 
 ## Quick start
 
@@ -21,6 +21,7 @@ python -m app.cli export-all --sample-items 100
 python -m app.cli normalize
 python -m app.cli audit
 python -m app.cli report
+python -m app.cli privacy-check
 ```
 
-Phase 1 is read-only. It exports raw Monday JSON, creates normalized schema JSON, runs deterministic audit rules, and generates Markdown reports under `exports/`.
+Phase 1 is read-only and operates exclusively in `technical_metadata_only` mode. Monday names, emails, descriptions, item content, column values, files, labels, raw settings, and credentials are neither requested nor stored. Monday IDs are replaced by run-scoped one-way references. See [PRIVACY.md](PRIVACY.md) for the complete boundary and the remaining organisational responsibilities.

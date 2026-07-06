@@ -51,14 +51,14 @@ class MondayNormalizer:
         boards = []
         for schema_path in sorted((run_dir / "boards").glob("board_*_schema.json")):
             schema = self.store.read_json(schema_path)
-            board_id = str(schema.get("id") or schema_path.name.split("_")[1])
-            sample_path = run_dir / "boards" / f"board_{board_id}_items_sample.json"
-            item_count = len(self.store.read_json(sample_path)) if sample_path.exists() else None
+            board_id = str(schema.get("id"))
+            sample_path = run_dir / "boards" / f"{board_id}_items_sample.json"
+            sample = self.store.read_json(sample_path) if sample_path.exists() else None
+            item_count = sample.get("sample_count") if isinstance(sample, dict) else None
             cols = []
             for col in schema.get("columns", []):
-                settings = _settings(col)
                 ctype = str(col.get("type", "unknown"))
-                cols.append(NormalizedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalized_type=TYPE_MAP.get(ctype, "unknown"), settings=settings, labels=_labels(settings), relationship_targets=_relationship_targets(settings)))
+                cols.append(NormalizedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalized_type=TYPE_MAP.get(ctype, "unknown"), settings={}, labels=[], relationship_targets=[]))
             boards.append(NormalizedBoard(id=board_id, name=str(schema.get("name", "")), workspace_id=str(schema.get("workspace_id")) if schema.get("workspace_id") else None, groups=[NormalizedGroup(id=str(g.get("id")), title=str(g.get("title", ""))) for g in schema.get("groups", [])], columns=cols, item_count=item_count))
         workspace_models = []
         for ws in workspaces_raw:

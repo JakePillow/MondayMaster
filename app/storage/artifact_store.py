@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from app.privacy.policy import validate_artifact
 
 
 class ArtifactStore:
@@ -16,7 +18,7 @@ class ArtifactStore:
             path.mkdir(parents=True, exist_ok=True)
 
     def new_run_dir(self) -> Path:
-        stamp = datetime.utcnow().strftime("run_%Y-%m-%d_%H%M%S")
+        stamp = datetime.now(UTC).strftime("run_%Y-%m-%d_%H%M%S")
         path = self.raw_root / stamp
         suffix = 1
         while path.exists():
@@ -32,9 +34,12 @@ class ArtifactStore:
         return runs[-1]
 
     def write_json(self, path: Path, data: Any) -> Path:
+        validate_artifact(data)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
         return path
 
     def read_json(self, path: Path) -> Any:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        validate_artifact(data)
+        return data

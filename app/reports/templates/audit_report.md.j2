@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-This read-only report contains deterministic schema findings only. GPT interpretation and ClickUp API writes are deferred.
+This read-only report contains deterministic technical-schema findings only. Monday-provided names, identities, descriptions, item content, values, labels, and raw settings were not collected. GPT interpretation and ClickUp API writes are disabled.
 
 - Boards audited: {{ model.boards | length }}
 - Findings: {{ findings | length }}
@@ -47,4 +47,4 @@ No high or critical findings were detected.
 
 ## 5. Cleanup Before Migration
 
-Prioritize missing status/owner/due-date columns, duplicate names, formula and mirror columns, and complex connect-board relationships before building a ClickUp migration plan.
+Prioritize missing status/owner/due-date types, formula and mirror columns, and connect-board relationships before building a ClickUp migration plan. Name-, label-, and content-based checks are intentionally unavailable in technical-metadata-only mode.
