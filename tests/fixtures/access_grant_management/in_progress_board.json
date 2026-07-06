@@ -1,0 +1,16 @@
+{
+  "id": "board_prog002",
+  "name": "Access and Grant Management - In Progress",
+  "workspace_id": null,
+  "columns": [
+    {"id": "col_approver", "title": "Approver", "type": "person", "locked": true},
+    {"id": "col_tool_admin", "title": "Tool Admin", "type": "person", "locked": true},
+    {"id": "col_status", "title": "Status", "type": "status", "locked": true},
+    {"id": "col_resolution", "title": "Resolution", "type": "status", "locked": true},
+    {"id": "col_personnel_group", "title": "Personnel Group", "type": "text", "locked": true}
+  ],
+  "groups": [
+    {"id": "grp_all", "title": "All", "item_count": 56}
+  ],
+  "automations": []
+}

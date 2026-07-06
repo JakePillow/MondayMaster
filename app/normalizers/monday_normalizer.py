@@ -3,7 +3,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.models.normalized import NormalizedAccount, NormalizedBoard, NormalizedColumn, NormalizedGroup, NormalizedWorkspace
+from app.models.monday_raw import AutomationActionType, AutomationTriggerType
+from app.models.normalized import (
+    NormalizedAccount,
+    NormalizedAutomation,
+    NormalizedBoard,
+    NormalizedColumn,
+    NormalizedGroup,
+    NormalizedWorkspace,
+)
 from app.storage.artifact_store import ArtifactStore
 
 TYPE_MAP = {
@@ -38,6 +46,32 @@ def _relationship_targets(settings: dict) -> list[str]:
     return []
 
 
+def _build_automation(raw: dict, board_id: str, board_name: str, board_names: dict[str, str]) -> NormalizedAutomation:
+    target_board_id = raw.get("target_board_id")
+    target_board_id = str(target_board_id) if target_board_id else None
+    return NormalizedAutomation(
+        board_id=board_id,
+        board_name=board_name,
+        trigger_type=AutomationTriggerType(raw.get("trigger_type") or AutomationTriggerType.UNKNOWN),
+        action_type=AutomationActionType(raw.get("action_type") or AutomationActionType.UNKNOWN),
+        target_board_id=target_board_id,
+        target_board_name=board_names.get(target_board_id) if target_board_id else None,
+        is_cross_board=bool(target_board_id) and target_board_id != board_id,
+    )
+
+
+def build_normalized_board(schema: dict, board_names: dict[str, str], item_count: int | None = None) -> NormalizedBoard:
+    board_id = str(schema.get("id"))
+    board_name = str(schema.get("name", ""))
+    cols = []
+    for col in schema.get("columns", []):
+        ctype = str(col.get("type", "unknown"))
+        cols.append(NormalizedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalized_type=TYPE_MAP.get(ctype, "unknown"), settings={}, labels=[], relationship_targets=[], is_locked=bool(col.get("locked", False))))
+    groups = [NormalizedGroup(id=str(g.get("id")), title=str(g.get("title", "")), item_count=int(g.get("item_count") or 0)) for g in schema.get("groups", [])]
+    automations = [_build_automation(a, board_id, board_name, board_names) for a in schema.get("automations", [])]
+    return NormalizedBoard(id=board_id, name=board_name, workspace_id=str(schema.get("workspace_id")) if schema.get("workspace_id") else None, groups=groups, columns=cols, item_count=item_count, automations=automations)
+
+
 class MondayNormalizer:
     def __init__(self, store: ArtifactStore):
         self.store = store
@@ -48,18 +82,15 @@ class MondayNormalizer:
         workspaces_raw = self.store.read_json(run_dir / "workspaces.json") if (run_dir / "workspaces.json").exists() else []
         account = self.store.read_json(run_dir / "account.json") if (run_dir / "account.json").exists() else {}
         users = self.store.read_json(run_dir / "users.json") if (run_dir / "users.json").exists() else []
+        schemas = [self.store.read_json(p) for p in sorted((run_dir / "boards").glob("board_*_schema.json"))]
+        board_names = {str(s.get("id")): str(s.get("name", "")) for s in schemas}
         boards = []
-        for schema_path in sorted((run_dir / "boards").glob("board_*_schema.json")):
-            schema = self.store.read_json(schema_path)
+        for schema in schemas:
             board_id = str(schema.get("id"))
             sample_path = run_dir / "boards" / f"{board_id}_items_sample.json"
             sample = self.store.read_json(sample_path) if sample_path.exists() else None
             item_count = sample.get("sample_count") if isinstance(sample, dict) else None
-            cols = []
-            for col in schema.get("columns", []):
-                ctype = str(col.get("type", "unknown"))
-                cols.append(NormalizedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalized_type=TYPE_MAP.get(ctype, "unknown"), settings={}, labels=[], relationship_targets=[]))
-            boards.append(NormalizedBoard(id=board_id, name=str(schema.get("name", "")), workspace_id=str(schema.get("workspace_id")) if schema.get("workspace_id") else None, groups=[NormalizedGroup(id=str(g.get("id")), title=str(g.get("title", ""))) for g in schema.get("groups", [])], columns=cols, item_count=item_count))
+            boards.append(build_normalized_board(schema, board_names, item_count=item_count))
         workspace_models = []
         for ws in workspaces_raw:
             wid = str(ws.get("id"))

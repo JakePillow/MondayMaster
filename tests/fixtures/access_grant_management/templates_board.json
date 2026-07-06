@@ -1,0 +1,21 @@
+{
+  "id": "board_tmpl001",
+  "name": "Access and Grant Management - Templates",
+  "workspace_id": null,
+  "columns": [
+    {"id": "col_team", "title": "Team", "type": "text", "locked": true},
+    {"id": "col_spec", "title": "Specification", "type": "long_text", "locked": true}
+  ],
+  "groups": [
+    {"id": "grp_tmpl_1", "title": "MT - Account Management", "item_count": 15}
+  ],
+  "automations": [
+    {
+      "board_id": "board_tmpl001",
+      "trigger_type": "button_click",
+      "action_type": "create_item",
+      "target_board_id": "board_prog002",
+      "raw_description": "Create AGM Ticket"
+    }
+  ]
+}

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from app.models.monday_raw import AutomationActionType, AutomationTriggerType
+
 
 class NormalizedGroup(BaseModel):
     id: str
     title: str
+    item_count: int = 0
 
 
 class NormalizedColumn(BaseModel):
@@ -16,12 +19,23 @@ class NormalizedColumn(BaseModel):
     settings: dict = Field(default_factory=dict)
     labels: list[str] = Field(default_factory=list)
     relationship_targets: list[str] = Field(default_factory=list)
+    is_locked: bool = False
 
 
 class NormalizedWorkspace(BaseModel):
     id: str
     name: str
     board_ids: list[str] = Field(default_factory=list)
+
+
+class NormalizedAutomation(BaseModel):
+    board_id: str
+    board_name: str
+    trigger_type: AutomationTriggerType
+    action_type: AutomationActionType
+    target_board_id: str | None = None
+    target_board_name: str | None = None
+    is_cross_board: bool = False
 
 
 class NormalizedBoard(BaseModel):
@@ -33,6 +47,7 @@ class NormalizedBoard(BaseModel):
     columns: list[NormalizedColumn] = Field(default_factory=list)
     item_count: int | None = None
     risks: list[str] = Field(default_factory=list)
+    automations: list[NormalizedAutomation] = Field(default_factory=list)
 
 
 class NormalizedAccount(BaseModel):
