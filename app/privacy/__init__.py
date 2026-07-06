@@ -1,5 +1,5 @@
 """Privacy controls for technical-metadata-only processing."""
 
-from app.privacy.policy import PrivacyViolation, TechnicalDataSanitizer, validate_artifact
+from app.privacy.policy import PrivacyViolation, TechnicalDataSanitiser, validate_artefact
 
-__all__ = ["PrivacyViolation", "TechnicalDataSanitizer", "validate_artifact"]
+__all__ = ["PrivacyViolation", "TechnicalDataSanitiser", "validate_artefact"]

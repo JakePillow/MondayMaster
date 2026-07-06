@@ -1,6 +1,6 @@
 # Schema Inventory
 
-Generated from the latest normalized Monday export.
+Generated from the latest normalised Monday export.
 
 ## Current Monday Architecture
 
@@ -32,9 +32,9 @@ Monday-provided names and titles are intentionally replaced by pseudonymous refe
 {% for board in model.boards %}
 ### {{ board.name }} (`{{ board.id }}`)
 
-| Column | Type | Normalized Type | Labels | Relationship Targets |
+| Column | Type | Normalised Type | Labels | Relationship Targets |
 | --- | --- | --- | --- | --- |
 {% for column in board.columns -%}
-| {{ column.title }} | {{ column.type }} | {{ column.normalized_type }} | {{ column.labels | join(', ') }} | {{ column.relationship_targets | join(', ') }} |
+| {{ column.title }} | {{ column.type }} | {{ column.normalised_type }} | {{ column.labels | join(', ') }} | {{ column.relationship_targets | join(', ') }} |
 {% endfor %}
 {% endfor %}

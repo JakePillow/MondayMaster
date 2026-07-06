@@ -1,7 +1,7 @@
 """Local Streamlit dashboard for MondayMaster audit runs.
 
-Purely a viewer: it reads the JSON artifacts already written by the CLI
-(`normalize` + `audit`) and never talks to monday.com or mutates anything.
+Purely a viewer: it reads the JSON artefacts already written by the CLI
+(`normalise` + `audit`) and never talks to monday.com or mutates anything.
 Run with:
 
     streamlit run streamlit_app.py
@@ -15,19 +15,19 @@ from pathlib import Path
 import streamlit as st
 
 from app.models.audit import AuditFinding, AuditResult
-from app.models.normalized import NormalizedAccount
+from app.models.normalised import NormalisedAccount
 
 SEVERITY_ORDER = ["critical", "high", "medium", "low"]
 SEVERITY_ICON = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
 
 
-def load_run(export_root: Path) -> tuple[NormalizedAccount | None, AuditResult | None]:
-    """Load a normalized schema + audit findings pair from an export root, if present."""
-    normalized_path = export_root / "normalized" / "normalized_schema.json"
-    findings_path = export_root / "normalized" / "audit_findings.json"
-    if not normalized_path.exists() or not findings_path.exists():
+def load_run(export_root: Path) -> tuple[NormalisedAccount | None, AuditResult | None]:
+    """Load a normalised schema + audit findings pair from an export root, if present."""
+    normalised_path = export_root / "normalised" / "normalised_schema.json"
+    findings_path = export_root / "normalised" / "audit_findings.json"
+    if not normalised_path.exists() or not findings_path.exists():
         return None, None
-    model = NormalizedAccount.model_validate(json.loads(normalized_path.read_text(encoding="utf-8")))
+    model = NormalisedAccount.model_validate(json.loads(normalised_path.read_text(encoding="utf-8")))
     findings = AuditResult.model_validate(json.loads(findings_path.read_text(encoding="utf-8")))
     return model, findings
 
@@ -40,7 +40,7 @@ def _sev_label(severity: str) -> str:
     return f"{SEVERITY_ICON.get(severity, '')} {severity}".strip()
 
 
-def render(model: NormalizedAccount, findings: AuditResult, export_root: Path) -> None:
+def render(model: NormalisedAccount, findings: AuditResult, export_root: Path) -> None:
     st.title("Structural Audit")
     st.caption(f"Export root: `{export_root}`")
 
@@ -103,14 +103,14 @@ def render(model: NormalizedAccount, findings: AuditResult, export_root: Path) -
 def main() -> None:
     st.set_page_config(page_title="MondayMaster — Structural Audit", layout="wide")
     st.sidebar.title("MondayMaster")
-    default_root = "exports" if Path("exports/normalized/normalized_schema.json").exists() else "exports_demo"
+    default_root = "exports" if Path("exports/normalised/normalised_schema.json").exists() else "exports_demo"
     export_root = Path(st.sidebar.text_input("Export root", value=default_root))
 
     model, findings = load_run(export_root)
     if model is None:
         st.warning(
-            f"No normalized/audit artifacts found under `{export_root}`.\n\n"
-            "Run `python -m app.cli export-all`, `normalize`, and `audit` first "
+            f"No normalised/audit artefacts found under `{export_root}`.\n\n"
+            "Run `python -m app.cli export-all`, `normalise`, and `audit` first "
             "(or `python scripts/demo_hacksaw_run.py` for a demo run without a monday.com token)."
         )
         return

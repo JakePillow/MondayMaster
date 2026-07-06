@@ -17,7 +17,7 @@ This Phase 1 application operates in `technical_metadata_only` mode. The mode is
 - Column values, free text, files, assets, status labels, or raw column settings
 - Monday IDs, API tokens, OpenAI keys, or ClickUp keys
 
-Every JSON write is checked by a deny-list validator. Names used in normalized data and reports are generated pseudonyms. A `privacy_manifest.json` accompanies each raw run. `python -m app.cli privacy-check` scans existing JSON and text artifacts and exits non-zero when it finds a violation.
+Every JSON write is checked by a deny-list validator. Names used in normalised data and reports are generated pseudonyms. A `privacy_manifest.json` accompanies each raw run. `python -m app.cli privacy-check` scans existing JSON and text artefacts and exits non-zero when it finds a violation.
 
 The OpenAI client cannot transmit data. Its only available preparation path produces an allowlisted structure containing pseudonymous references, counts, column-type counts, and deterministic finding codes. Any unexpected field is rejected.
 

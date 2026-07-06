@@ -9,17 +9,17 @@ from dotenv import load_dotenv
 from app.audits.engine import AuditEngine
 from app.clients.monday_client import MondayClient
 from app.exporters.monday_exporter import MondayExporter
-from app.normalizers.monday_normalizer import MondayNormalizer
+from app.normalisers.monday_normaliser import MondayNormaliser
 from app.privacy.policy import scan_export_tree
 from app.reports.markdown_reporter import MarkdownReporter
-from app.storage.artifact_store import ArtifactStore
+from app.storage.artefact_store import ArtefactStore
 
 app = typer.Typer(help="Read-only Monday.com schema audit and migration-readiness CLI.")
 
 
-def _store() -> ArtifactStore:
+def _store() -> ArtefactStore:
     load_dotenv()
-    return ArtifactStore(os.getenv("EXPORT_ROOT", "exports"))
+    return ArtefactStore(os.getenv("EXPORT_ROOT", "exports"))
 
 
 def _client() -> MondayClient:
@@ -60,10 +60,10 @@ def export_all(sample_items: int = typer.Option(100, help="Maximum item sample p
     typer.echo(f"Exported Monday account to {path}")
 
 
-@app.command("normalize")
-def normalize():
-    path = MondayNormalizer(_store()).normalize_latest()
-    typer.echo(f"Wrote normalized schema to {path}")
+@app.command("normalise")
+def normalise():
+    path = MondayNormaliser(_store()).normalise_latest()
+    typer.echo(f"Wrote normalised schema to {path}")
 
 
 @app.command("audit")
@@ -88,7 +88,7 @@ def privacy_check():
         for violation in violations:
             typer.echo(violation, err=True)
         raise typer.Exit(code=1)
-    typer.echo("Privacy check passed: artifacts contain technical metadata only.")
+    typer.echo("Privacy check passed: artefacts contain technical metadata only.")
 
 
 if __name__ == "__main__":

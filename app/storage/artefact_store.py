@@ -5,16 +5,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from app.privacy.policy import validate_artifact
+from app.privacy.policy import validate_artefact
 
 
-class ArtifactStore:
+class ArtefactStore:
     def __init__(self, export_root: str = "exports"):
         self.export_root = Path(export_root)
         self.raw_root = self.export_root / "raw"
-        self.normalized_root = self.export_root / "normalized"
+        self.normalised_root = self.export_root / "normalised"
         self.reports_root = self.export_root / "reports"
-        for path in (self.raw_root, self.normalized_root, self.reports_root, self.export_root / "logs"):
+        for path in (self.raw_root, self.normalised_root, self.reports_root, self.export_root / "logs"):
             path.mkdir(parents=True, exist_ok=True)
 
     def new_run_dir(self) -> Path:
@@ -34,12 +34,12 @@ class ArtifactStore:
         return runs[-1]
 
     def write_json(self, path: Path, data: Any) -> Path:
-        validate_artifact(data)
+        validate_artefact(data)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
         return path
 
     def read_json(self, path: Path) -> Any:
         data = json.loads(path.read_text(encoding="utf-8"))
-        validate_artifact(data)
+        validate_artefact(data)
         return data

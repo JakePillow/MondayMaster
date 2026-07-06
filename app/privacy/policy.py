@@ -40,7 +40,7 @@ _REFERENCE_LIST_KEYS = {"board_ids", "relationship_targets"}
 
 
 class PrivacyViolation(ValueError):
-    """Raised when an artifact contains data outside the technical allowlist."""
+    """Raised when an artefact contains data outside the technical allowlist."""
 
 
 def is_opaque_reference(value: Any, kind: str | None = None) -> bool:
@@ -49,7 +49,7 @@ def is_opaque_reference(value: Any, kind: str | None = None) -> bool:
     return kind is None or value.startswith(f"{kind}_")
 
 
-class TechnicalDataSanitizer:
+class TechnicalDataSanitiser:
     """Convert Monday identifiers to run-scoped opaque references and drop content."""
 
     def __init__(self, salt: bytes | None = None):
@@ -122,19 +122,19 @@ class TechnicalDataSanitizer:
         `raw_description` (a human-authored recipe label) is deliberately dropped — this
         pipeline never persists free text, per PRIVACY.md.
         """
-        sanitized = []
+        sanitised = []
         for automation in raw_automations:
             trigger_type = str(automation.get("trigger_type") or "unknown")
             action_type = str(automation.get("action_type") or "unknown")
             target_board_id = automation.get("target_board_id")
-            sanitized.append(
+            sanitised.append(
                 {
                     "trigger_type": trigger_type if trigger_type in self._KNOWN_TRIGGER_TYPES else "unknown",
                     "action_type": action_type if action_type in self._KNOWN_ACTION_TYPES else "unknown",
                     "target_board_id": self.ref("board", target_board_id) if target_board_id else None,
                 }
             )
-        return sanitized
+        return sanitised
 
     def item_sample_summary(self, items: list[dict[str, Any]], limit: int) -> dict[str, Any]:
         return {
@@ -204,18 +204,18 @@ def _walk(value: Any, path: str, violations: list[str]) -> None:
             violations.append(f"{path}: credential-like content")
 
 
-def validate_artifact(data: Any) -> None:
+def validate_artefact(data: Any) -> None:
     violations: list[str] = []
     _walk(data, "$", violations)
     if violations:
         raise PrivacyViolation("Privacy validation failed: " + "; ".join(violations[:10]))
 
 
-def validate_text_artifact(text: str) -> None:
+def validate_text_artefact(text: str) -> None:
     if _EMAIL_RE.search(text):
-        raise PrivacyViolation("Privacy validation failed: email-like content in text artifact")
+        raise PrivacyViolation("Privacy validation failed: email-like content in text artefact")
     if _BEARER_RE.search(text):
-        raise PrivacyViolation("Privacy validation failed: credential-like content in text artifact")
+        raise PrivacyViolation("Privacy validation failed: credential-like content in text artefact")
 
 
 def scan_export_tree(root: Path) -> list[str]:
@@ -227,9 +227,9 @@ def scan_export_tree(root: Path) -> list[str]:
             continue
         try:
             if path.suffix.lower() == ".json":
-                validate_artifact(json.loads(path.read_text(encoding="utf-8")))
+                validate_artefact(json.loads(path.read_text(encoding="utf-8")))
             elif path.suffix.lower() in {".md", ".txt", ".log"}:
-                validate_text_artifact(path.read_text(encoding="utf-8"))
+                validate_text_artefact(path.read_text(encoding="utf-8"))
         except (PrivacyViolation, json.JSONDecodeError, UnicodeDecodeError) as exc:
             violations.append(f"{path}: {exc}")
     return violations

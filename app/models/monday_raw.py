@@ -27,7 +27,7 @@ class RawAutomation(BaseModel):
 
     `raw_description` is a scrape-path convenience for manually classifying trigger/action type
     from a recipe's plain-language text (e.g. "Create AGM Ticket"). It is intentionally dropped
-    by the normalizer and must never be written to a stored artifact — PRIVACY.md forbids
+    by the normaliser and must never be written to a stored artefact — PRIVACY.md forbids
     persisting free text of any kind.
     """
 

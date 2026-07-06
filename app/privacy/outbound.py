@@ -3,11 +3,11 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from typing import TYPE_CHECKING, Any
 
-from app.privacy.policy import is_opaque_reference, validate_artifact
+from app.privacy.policy import is_opaque_reference, validate_artefact
 
 if TYPE_CHECKING:
     from app.models.audit import AuditFinding
-    from app.models.normalized import NormalizedAccount
+    from app.models.normalised import NormalisedAccount
 
 
 _ALLOWED_TOP_LEVEL = {"schema_version", "privacy_mode", "account_metrics", "boards"}
@@ -24,7 +24,7 @@ _ALLOWED_FINDING = {"rule_id", "severity", "object_type"}
 
 
 def build_technical_analysis_payload(
-    model: NormalizedAccount, findings: list[AuditFinding]
+    model: NormalisedAccount, findings: list[AuditFinding]
 ) -> dict[str, Any]:
     findings_by_board: dict[str, list[AuditFinding]] = defaultdict(list)
     for finding in findings:
@@ -42,7 +42,7 @@ def build_technical_analysis_payload(
                 "workspace_ref": board.workspace_id,
                 "group_count": len(board.groups),
                 "sample_item_count": board.item_count,
-                "column_type_counts": dict(Counter(c.normalized_type for c in board.columns)),
+                "column_type_counts": dict(Counter(c.normalised_type for c in board.columns)),
                 "findings": [
                     {
                         "rule_id": finding.rule_id,
@@ -58,7 +58,7 @@ def build_technical_analysis_payload(
 
 
 def validate_outbound_payload(payload: dict[str, Any]) -> None:
-    validate_artifact(payload)
+    validate_artefact(payload)
     if set(payload) != _ALLOWED_TOP_LEVEL:
         raise ValueError("Outbound payload contains unexpected top-level fields")
     if set(payload["account_metrics"]) != _ALLOWED_ACCOUNT_METRICS:

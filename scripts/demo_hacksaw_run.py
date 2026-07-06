@@ -1,4 +1,4 @@
-"""Run the real export -> normalize -> audit -> report pipeline against a stand-in
+"""Run the real export -> normalise -> audit -> report pipeline against a stand-in
 client shaped like the Hacksaw "Access & Grant Management" case study (docs/PROJECT_CONTEXT.md
 section 6). There is no live MONDAY_API_TOKEN configured, so this exercises the actual
 pipeline code end-to-end without touching a real monday.com account.
@@ -9,12 +9,15 @@ Usage: python scripts/demo_hacksaw_run.py [export_root]
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.audits.engine import AuditEngine
 from app.exporters.monday_exporter import MondayExporter
-from app.normalizers.monday_normalizer import MondayNormalizer
+from app.normalisers.monday_normaliser import MondayNormaliser
 from app.reports.markdown_reporter import MarkdownReporter
-from app.storage.artifact_store import ArtifactStore
+from app.storage.artefact_store import ArtefactStore
 
 
 class DemoMondayClient:
@@ -76,14 +79,14 @@ class DemoMondayClient:
 
 def main() -> None:
     export_root = sys.argv[1] if len(sys.argv) > 1 else "exports_demo"
-    store = ArtifactStore(export_root)
+    store = ArtefactStore(export_root)
     client = DemoMondayClient()
 
     run_dir = MondayExporter(client, store).export_all(sample_items=100)
     print(f"Exported to {run_dir}")
 
-    normalized_path = MondayNormalizer(store).normalize_latest()
-    print(f"Normalized to {normalized_path}")
+    normalised_path = MondayNormaliser(store).normalise_latest()
+    print(f"Normalised to {normalised_path}")
 
     audit_path = AuditEngine(store).run()
     print(f"Audit findings at {audit_path}")

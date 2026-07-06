@@ -4,15 +4,15 @@ import json
 from pathlib import Path
 
 from app.models.monday_raw import AutomationActionType, AutomationTriggerType
-from app.models.normalized import (
-    NormalizedAccount,
-    NormalizedAutomation,
-    NormalizedBoard,
-    NormalizedColumn,
-    NormalizedGroup,
-    NormalizedWorkspace,
+from app.models.normalised import (
+    NormalisedAccount,
+    NormalisedAutomation,
+    NormalisedBoard,
+    NormalisedColumn,
+    NormalisedGroup,
+    NormalisedWorkspace,
 )
-from app.storage.artifact_store import ArtifactStore
+from app.storage.artefact_store import ArtefactStore
 
 TYPE_MAP = {
     "status": "status", "dropdown": "dropdown", "people": "people", "person": "people", "date": "date",
@@ -46,10 +46,10 @@ def _relationship_targets(settings: dict) -> list[str]:
     return []
 
 
-def _build_automation(raw: dict, board_id: str, board_name: str, board_names: dict[str, str]) -> NormalizedAutomation:
+def _build_automation(raw: dict, board_id: str, board_name: str, board_names: dict[str, str]) -> NormalisedAutomation:
     target_board_id = raw.get("target_board_id")
     target_board_id = str(target_board_id) if target_board_id else None
-    return NormalizedAutomation(
+    return NormalisedAutomation(
         board_id=board_id,
         board_name=board_name,
         trigger_type=AutomationTriggerType(raw.get("trigger_type") or AutomationTriggerType.UNKNOWN),
@@ -60,23 +60,23 @@ def _build_automation(raw: dict, board_id: str, board_name: str, board_names: di
     )
 
 
-def build_normalized_board(schema: dict, board_names: dict[str, str], item_count: int | None = None) -> NormalizedBoard:
+def build_normalised_board(schema: dict, board_names: dict[str, str], item_count: int | None = None) -> NormalisedBoard:
     board_id = str(schema.get("id"))
     board_name = str(schema.get("name", ""))
     cols = []
     for col in schema.get("columns", []):
         ctype = str(col.get("type", "unknown"))
-        cols.append(NormalizedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalized_type=TYPE_MAP.get(ctype, "unknown"), settings={}, labels=[], relationship_targets=[], is_locked=bool(col.get("locked", False))))
-    groups = [NormalizedGroup(id=str(g.get("id")), title=str(g.get("title", "")), item_count=int(g.get("item_count") or 0)) for g in schema.get("groups", [])]
+        cols.append(NormalisedColumn(id=str(col.get("id")), title=str(col.get("title", "")), type=ctype, normalised_type=TYPE_MAP.get(ctype, "unknown"), settings={}, labels=[], relationship_targets=[], is_locked=bool(col.get("locked", False))))
+    groups = [NormalisedGroup(id=str(g.get("id")), title=str(g.get("title", "")), item_count=int(g.get("item_count") or 0)) for g in schema.get("groups", [])]
     automations = [_build_automation(a, board_id, board_name, board_names) for a in schema.get("automations", [])]
-    return NormalizedBoard(id=board_id, name=board_name, workspace_id=str(schema.get("workspace_id")) if schema.get("workspace_id") else None, groups=groups, columns=cols, item_count=item_count, automations=automations)
+    return NormalisedBoard(id=board_id, name=board_name, workspace_id=str(schema.get("workspace_id")) if schema.get("workspace_id") else None, groups=groups, columns=cols, item_count=item_count, automations=automations)
 
 
-class MondayNormalizer:
-    def __init__(self, store: ArtifactStore):
+class MondayNormaliser:
+    def __init__(self, store: ArtefactStore):
         self.store = store
 
-    def normalize_latest(self) -> Path:
+    def normalise_latest(self) -> Path:
         run_dir = self.store.latest_raw_run()
         boards_index = self.store.read_json(run_dir / "boards_index.json") if (run_dir / "boards_index.json").exists() else []
         workspaces_raw = self.store.read_json(run_dir / "workspaces.json") if (run_dir / "workspaces.json").exists() else []
@@ -90,12 +90,12 @@ class MondayNormalizer:
             sample_path = run_dir / "boards" / f"{board_id}_items_sample.json"
             sample = self.store.read_json(sample_path) if sample_path.exists() else None
             item_count = sample.get("sample_count") if isinstance(sample, dict) else None
-            boards.append(build_normalized_board(schema, board_names, item_count=item_count))
+            boards.append(build_normalised_board(schema, board_names, item_count=item_count))
         workspace_models = []
         for ws in workspaces_raw:
             wid = str(ws.get("id"))
-            workspace_models.append(NormalizedWorkspace(id=wid, name=str(ws.get("name", "")), board_ids=[str(b.get("id")) for b in boards_index if str(b.get("workspace_id")) == wid]))
-        normalized = NormalizedAccount(account=account, users=users, workspaces=workspace_models, boards=boards)
-        path = self.store.normalized_root / "normalized_schema.json"
-        self.store.write_json(path, normalized.model_dump())
+            workspace_models.append(NormalisedWorkspace(id=wid, name=str(ws.get("name", "")), board_ids=[str(b.get("id")) for b in boards_index if str(b.get("workspace_id")) == wid]))
+        normalised = NormalisedAccount(account=account, users=users, workspaces=workspace_models, boards=boards)
+        path = self.store.normalised_root / "normalised_schema.json"
+        self.store.write_json(path, normalised.model_dump())
         return path

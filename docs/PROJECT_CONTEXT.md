@@ -4,25 +4,25 @@
 
 ## 1. What this project is
 
-A tool to audit Hacksaw Gaming's monday.com account structure and evaluate migrating to ClickUp. It is **not** a generic "compare two PM tools" exercise — it's a schema-first systems audit, treating monday.com as a database/workflow engine that needs to be exported, normalized, validated, and only then interpreted (by rules first, GPT second).
+A tool to audit Hacksaw Gaming's monday.com account structure and evaluate migrating to ClickUp. It is **not** a generic "compare two PM tools" exercise — it's a schema-first systems audit, treating monday.com as a database/workflow engine that needs to be exported, normalised, validated, and only then interpreted (by rules first, GPT second).
 
 **Owner intent, in their own words:** they work better with schema/technical data than with narrative descriptions, and want something closer to a PowerShell-style surgical tool — export everything, inspect it as data, make targeted fixes — rather than a black-box migration wizard.
 
 ## 2. Pipeline architecture
 
 ```
-Monday Export → Normalization → Deterministic Audit → GPT Analysis →
+Monday Export → Normalisation → Deterministic Audit → GPT Analysis →
 Migration Mapping → Report Generation → (optional) Safe Fixes
 ```
 
 Design principles, in priority order:
 
 1. **Schema first** — structure before interpretation.
-2. **Artifacts before interpretation** — every stage writes a durable, inspectable artifact (raw export → normalized model → audit results) before anything touches an LLM.
-3. **Deterministic validation before AI** — rule-based checks run first; GPT only analyzes what rules can't decide.
+2. **Artefacts before interpretation** — every stage writes a durable, inspectable artefact (raw export → normalised model → audit results) before anything touches an LLM.
+3. **Deterministic validation before AI** — rule-based checks run first; GPT only analyses what rules can't decide.
 4. **Local-first, CLI-first** — no hosted service assumption; runs from the command line against local files.
 5. **Safe-by-default mutations** — write/fix operations are deferred behind dry-run support; nothing mutates monday.com until validated.
-6. **Platform-neutral intermediate model** — the normalized schema is not monday-shaped or ClickUp-shaped; both are mapped onto/from it.
+6. **Platform-neutral intermediate model** — the normalised schema is not monday-shaped or ClickUp-shaped; both are mapped onto/from it.
 
 ## 3. monday.com data model (reference)
 
@@ -32,7 +32,7 @@ Hierarchy, top to bottom: **Account → Workspace → Folder → Board → Group
 - **Board**: the actual unit of work. Two functional archetypes matter for auditing:
   - *Intake boards* — low friction, high volume, minimal required fields (requests, tickets, ideas).
   - *Processing boards* — mandatory owners, enforced statuses, automations that maintain consistency (active projects, pipelines).
-- **Anti-pattern to flag in audits**: automations whose only job is keeping duplicated data in sync across boards. That's a modeling problem wearing an automation costume, not a legitimate automation use.
+- **Anti-pattern to flag in audits**: automations whose only job is keeping duplicated data in sync across boards. That's a modelling problem wearing an automation costume, not a legitimate automation use.
 - **Column types** that need special handling in an exporter: `mirror`, `formula`, `board_relation`, `connect_boards`, `status`/label columns, `people`, `subitems`. These don't have a clean 1:1 target type on the other platform.
 
 ## 4. ClickUp data model (reference)
@@ -94,7 +94,7 @@ Templates and Completed boards mirror this core column set — schema discipline
 **Audit findings this tool's rule engine should be able to detect automatically:**
 
 1. **Cross-board automation trigger with no destination-platform equivalent.** The Templates board's button column exists only to create items on a different board (In Progress). ClickUp has no native cross-board button trigger — this must surface as a manual-redesign flag in the migration report, not a silent 1:1 mapping.
-2. **Flat-text org taxonomy instead of a relation.** "Personnel Group" stores values like `"MT - Data & Analytics"` as plain text rather than relating to a real personnel/org-chart board. Flag as a normalization candidate — a `board_relation` would be more useful.
+2. **Flat-text org taxonomy instead of a relation.** "Personnel Group" stores values like `"MT - Data & Analytics"` as plain text rather than relating to a real personnel/org-chart board. Flag as a normalisation candidate — a `board_relation` would be more useful.
 3. **Single-group mega-board.** The Completed archive has ~3,800 items in one flat group. Flag boards past a size threshold (e.g. >500 items, 1 group) as archiving/reorganization candidates.
 4. **Heavy column locking** (🔒 on nearly every field) is a *positive* signal — treat as evidence of intentional governance, not something to flag.
 

@@ -5,16 +5,16 @@ import unittest
 from pathlib import Path
 
 from app.audits.rules import audit_model
-from app.models.normalized import NormalizedAccount, NormalizedBoard
-from app.normalizers.monday_normalizer import build_normalized_board
+from app.models.normalised import NormalisedAccount, NormalisedBoard
+from app.normalisers.monday_normaliser import build_normalised_board
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "access_grant_management"
 
 
-def _load_case_study_boards() -> list[NormalizedBoard]:
+def _load_case_study_boards() -> list[NormalisedBoard]:
     schemas = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(FIXTURE_DIR.glob("*.json"))]
     board_names = {str(s["id"]): str(s["name"]) for s in schemas}
-    return [build_normalized_board(schema, board_names) for schema in schemas]
+    return [build_normalised_board(schema, board_names) for schema in schemas]
 
 
 class HacksawCaseStudyAuditTests(unittest.TestCase):
@@ -29,7 +29,7 @@ class HacksawCaseStudyAuditTests(unittest.TestCase):
         self.boards = _load_case_study_boards()
         self.by_name = {b.name: b for b in self.boards}
 
-    def test_normalizes_locked_columns_item_counts_and_automations(self):
+    def test_normalises_locked_columns_item_counts_and_automations(self):
         templates = self.by_name["Access and Grant Management - Templates"]
         self.assertTrue(all(c.is_locked for c in templates.columns))
         self.assertEqual(templates.groups[0].item_count, 15)
@@ -43,7 +43,7 @@ class HacksawCaseStudyAuditTests(unittest.TestCase):
         self.assertEqual(completed.groups[0].item_count, 3798)
 
     def test_case_study_rules_fire_as_expected(self):
-        model = NormalizedAccount(boards=self.boards)
+        model = NormalisedAccount(boards=self.boards)
         findings = audit_model(model)
         by_rule: dict[str, list] = {}
         for f in findings:

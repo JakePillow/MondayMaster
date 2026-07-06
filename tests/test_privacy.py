@@ -8,11 +8,11 @@ from pathlib import Path
 from app.exporters.monday_exporter import MondayExporter
 from app.audits.engine import AuditEngine
 from app.clients.monday_client import MondayClient
-from app.normalizers.monday_normalizer import MondayNormalizer
+from app.normalisers.monday_normaliser import MondayNormaliser
 from app.privacy.outbound import validate_outbound_payload
-from app.privacy.policy import PrivacyViolation, TechnicalDataSanitizer, scan_export_tree, validate_artifact
+from app.privacy.policy import PrivacyViolation, TechnicalDataSanitiser, scan_export_tree, validate_artefact
 from app.reports.markdown_reporter import MarkdownReporter
-from app.storage.artifact_store import ArtifactStore
+from app.storage.artefact_store import ArtefactStore
 
 
 class FakeMondayClient:
@@ -53,16 +53,16 @@ class FakeMondayClient:
 class PrivacyTests(unittest.TestCase):
     def test_validator_rejects_identity_and_content(self):
         with self.assertRaises(PrivacyViolation):
-            validate_artifact({"users": [{"name": "Jane Doe", "email": "jane@example.com"}]})
+            validate_artefact({"users": [{"name": "Jane Doe", "email": "jane@example.com"}]})
         with self.assertRaises(PrivacyViolation):
-            validate_artifact({"id": "raw-monday-id"})
+            validate_artefact({"id": "raw-monday-id"})
         with self.assertRaises(PrivacyViolation):
-            validate_artifact({"column_values": [{"text": "secret"}]})
+            validate_artefact({"column_values": [{"text": "secret"}]})
 
     def test_export_all_persists_only_technical_metadata(self):
         client = FakeMondayClient()
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ArtifactStore(temp_dir)
+            store = ArtefactStore(temp_dir)
             run = MondayExporter(client, store).export_all(sample_items=10)
             all_text = "\n".join(
                 path.read_text(encoding="utf-8") for path in run.rglob("*.json")
@@ -76,11 +76,11 @@ class PrivacyTests(unittest.TestCase):
             self.assertEqual(sample["sample_count"], 1)
             self.assertFalse(sample["content_exported"])
             for path in run.rglob("*.json"):
-                validate_artifact(json.loads(path.read_text(encoding="utf-8")))
+                validate_artefact(json.loads(path.read_text(encoding="utf-8")))
 
-    def test_sanitizer_references_are_run_scoped_and_consistent(self):
-        first = TechnicalDataSanitizer(b"a" * 32)
-        second = TechnicalDataSanitizer(b"b" * 32)
+    def test_sanitiser_references_are_run_scoped_and_consistent(self):
+        first = TechnicalDataSanitiser(b"a" * 32)
+        second = TechnicalDataSanitiser(b"b" * 32)
         self.assertEqual(first.ref("board", "123"), first.ref("board", "123"))
         self.assertNotEqual(first.ref("board", "123"), second.ref("board", "123"))
 
@@ -130,9 +130,9 @@ class PrivacyTests(unittest.TestCase):
 
     def test_complete_local_pipeline_remains_privacy_safe(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            store = ArtifactStore(temp_dir)
+            store = ArtefactStore(temp_dir)
             MondayExporter(FakeMondayClient(), store).export_all(sample_items=10)
-            MondayNormalizer(store).normalize_latest()
+            MondayNormaliser(store).normalise_latest()
             AuditEngine(store).run()
             report_paths = MarkdownReporter(store).generate()
             self.assertEqual(len(report_paths), 2)
