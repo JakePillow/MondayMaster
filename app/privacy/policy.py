@@ -94,7 +94,8 @@ class TechnicalDataSanitizer:
         board["groups"] = []
         for group in raw.get("groups", []):
             ref = self.ref("group", group.get("id"))
-            board["groups"].append({"id": ref, "title": self.synthetic_name(ref)})
+            item_count = group.get("items_count", group.get("item_count", 0))
+            board["groups"].append({"id": ref, "title": self.synthetic_name(ref), "item_count": int(item_count or 0)})
         board["columns"] = []
         for column in raw.get("columns", []):
             ref = self.ref("column", column.get("id"))
@@ -103,12 +104,37 @@ class TechnicalDataSanitizer:
                     "id": ref,
                     "title": self.synthetic_name(ref),
                     "type": str(column.get("type") or "unknown"),
+                    "locked": bool(column.get("locked", False)),
                     "settings": {},
                     "labels": [],
                     "relationship_targets": [],
                 }
             )
+        board["automations"] = self.automations(raw.get("automations", []))
         return board
+
+    _KNOWN_TRIGGER_TYPES = {"button_click", "status_change", "item_created", "date_arrives", "column_change"}
+    _KNOWN_ACTION_TYPES = {"create_item", "notify", "move_item", "change_column"}
+
+    def automations(self, raw_automations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Structural-only: trigger/action type and a pseudonymous target board ref.
+
+        `raw_description` (a human-authored recipe label) is deliberately dropped — this
+        pipeline never persists free text, per PRIVACY.md.
+        """
+        sanitized = []
+        for automation in raw_automations:
+            trigger_type = str(automation.get("trigger_type") or "unknown")
+            action_type = str(automation.get("action_type") or "unknown")
+            target_board_id = automation.get("target_board_id")
+            sanitized.append(
+                {
+                    "trigger_type": trigger_type if trigger_type in self._KNOWN_TRIGGER_TYPES else "unknown",
+                    "action_type": action_type if action_type in self._KNOWN_ACTION_TYPES else "unknown",
+                    "target_board_id": self.ref("board", target_board_id) if target_board_id else None,
+                }
+            )
+        return sanitized
 
     def item_sample_summary(self, items: list[dict[str, Any]], limit: int) -> dict[str, Any]:
         return {
