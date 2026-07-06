@@ -1,6 +1,7 @@
 .env
 .venv/
 exports/
+exports_demo/
 __pycache__/
 *.py[cod]
 .pytest_cache/

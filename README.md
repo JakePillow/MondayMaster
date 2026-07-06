@@ -25,3 +25,15 @@ python -m app.cli privacy-check
 ```
 
 Phase 1 is read-only and operates exclusively in `technical_metadata_only` mode. Monday names, emails, descriptions, item content, column values, files, labels, raw settings, and credentials are neither requested nor stored. Monday IDs are replaced by run-scoped one-way references. See [PRIVACY.md](PRIVACY.md) for the complete boundary and the remaining organisational responsibilities.
+
+No monday.com token yet? Run `python scripts/demo_hacksaw_run.py` instead of the `export-all` step above — it runs the same pipeline against a stand-in client shaped like a real case study, so you can see `normalize`/`audit`/`report`/the dashboard working end to end without one.
+
+## Dashboard
+
+`streamlit_app.py` is a local, read-only viewer over whatever `normalize`/`audit` already wrote to disk — it never talks to monday.com itself.
+
+```bash
+streamlit run streamlit_app.py
+```
+
+It looks under `exports/` by default (or `exports_demo/` if that's the only one present); point it at a different export root from the sidebar. No exports yet? Run `python scripts/demo_hacksaw_run.py` to generate a demo run without needing a monday.com token.
